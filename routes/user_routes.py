@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify, current_app
 from bson.objectid import ObjectId
 from bson.json_util import dumps
-
+from models.user_model import UserSchema
+from utils.response import success_response, error_response
 
 
 user_bp = Blueprint('user_routes', __name__)
+user_schema = UserSchema()
 
 @user_bp.route('/ping')
 def index():
@@ -15,17 +17,14 @@ def index():
 
 @user_bp.route('/add', methods=['POST'])
 def add():
-    
-    print("Adding data...")
-    print("Request data:", request.json)
+  
     try:
         data = request.json
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-        current_app.mongo.db.appdevcoll.insert_one(data)
-        return jsonify({"message": "Added successfully"}), 201
+        validated = user_schema.load(data)
+        current_app.mongo.db.appdevcoll.insert_one(validated)
+        return success_response("Added successfully", 201)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return error_response(e, 500)
 
 @user_bp.route('/get', methods=['GET'])
 def get():
@@ -34,13 +33,17 @@ def get():
 
 @user_bp.route('/update/<id>', methods=['PUT'])
 def update(id):
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-    current_app.mongo.db.appdevcoll.update_one({"_id": ObjectId(id)}, {"$set": data})
-    return jsonify({"message": "Updated successfully"}), 200
+    try:
+        data = request.json
+        validated = user_schema.load(data, partial=True)  # allow partial updates
+        current_app.mongo.db.appdevcoll.update_one({"_id": ObjectId(id)}, {"$set": validated})
+        return success_response("Updated successfully")
+    except Exception as e:
+        return error_response(e, 500)
 
 @user_bp.route('/delete/<id>', methods=['DELETE'])
 def delete(id):
     current_app.mongo.db.appdevcoll.delete_one({"_id": ObjectId(id)})
     return jsonify({"message": "Deleted successfully"}), 200
+
+
