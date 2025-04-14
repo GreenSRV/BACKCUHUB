@@ -17,9 +17,7 @@ app.mongo = mongo
 print("Connected to MongoDB!")
 app.register_blueprint(user_bp)
 
-# Debug route to show collections
 
-############### 
 if __name__ == '__main__':
     print("Starting Flask app... YYY")
     print("Mongo URI:", os.getenv("MONGO_URI")) 
