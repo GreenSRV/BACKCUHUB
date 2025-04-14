@@ -1,4 +1,4 @@
-from flask import Blueprint, Flask, jsonify
+from flask import  Flask
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -16,7 +16,6 @@ mongo = PyMongo(app, tlsCAFile=certifi.where())
 app.mongo = mongo
 print("Connected to MongoDB!")
 app.register_blueprint(user_bp)
-
 
 if __name__ == '__main__':
     print("Starting Flask app... YYY")
