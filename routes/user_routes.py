@@ -21,9 +21,12 @@ def index():
 def add_student():
     try:
         data = request.json
-        data["student_id"] = get_next_sequence("student_id")  # Auto-increment student_id
+        #data["student_id"] = get_next_sequence("student_id")  # Auto-increment student_id
         validated = student_schema.load(data)
-        current_app.mongo.db.students.insert_one(validated)
+        print(validated)
+        result = current_app.mongo.db.students.insert_one(validated)
+        #data["_id"] = str(result.inserted_id)  # Convert ObjectId to string
+        
         return success_response("Student added successfully", 201)
     except Exception as e:
         return error_response(e, 500)
@@ -31,7 +34,11 @@ def add_student():
 @user_bp.route('/students', methods=['GET'])
 def get_students():
     try:
-        data = current_app.mongo.db.students.find()
+        # Check if query parameter is provided
+        search_query = request.args.get('query','')    
+        data = current_app.mongo.db.students.find({
+            "student_id": {"$regex": search_query, "$options": "i"}
+        })
         return dumps(data), 200
     except Exception as e:
         return error_response(e, 500)
@@ -41,15 +48,15 @@ def update_student(id):
     try:
         data = request.json
         validated = student_schema.load(data, partial=True)
-        current_app.mongo.db.students.update_one({"_id": ObjectId(id)}, {"$set": validated})
-        return success_response("Student updated successfully")
+        current_app.mongo.db.students.update_one({"student_id": str(id)}, {"$set": validated})
+        return success_response("Student updated successfully") 
     except Exception as e:
         return error_response(e, 500)
 
 @user_bp.route('/students/<id>', methods=['DELETE'])
 def delete_student(id):
     try:
-        current_app.mongo.db.students.delete_one({"student_id": int(id)})
+        current_app.mongo.db.students.delete_one({"student_id": str(id)})
         if current_app.mongo.db.students.deleted_count == 0:
             return error_response("Student not found", 404)
         return jsonify({"message": "Student deleted successfully"}), 200
@@ -61,7 +68,7 @@ def delete_student(id):
 def add_club():
     try:
         data = request.json
-        data["club_id"] = get_next_sequence("club_id")  # Auto-increment club_id
+        # data["club_id"] = get_next_sequence("club_id")  # Auto-increment club_id
         validated = club_schema.load(data)
         current_app.mongo.db.clubs.insert_one(validated)
         return success_response("Club added successfully", 201)
@@ -71,7 +78,11 @@ def add_club():
 @user_bp.route('/clubs', methods=['GET'])
 def get_clubs():
     try:
-        data = current_app.mongo.db.clubs.find()
+        # Check if query parameter is provided
+        search_query = request.args.get('query', '')
+        data = current_app.mongo.db.clubs.find({
+            "club_id": {"$regex": search_query, "$options": "i"}
+        })
         return dumps(data), 200
     except Exception as e:
         return error_response(e, 500)
@@ -81,7 +92,7 @@ def update_club(id):
     try:
         data = request.json
         validated = club_schema.load(data, partial=True)
-        current_app.mongo.db.clubs.update_one({"_id": ObjectId(id)}, {"$set": validated})
+        current_app.mongo.db.clubs.update_one({"club_id": str(id)}, {"$set": validated})
         return success_response("Club updated successfully")
     except Exception as e:
         return error_response(e, 500)
@@ -89,9 +100,7 @@ def update_club(id):
 @user_bp.route('/clubs/<id>', methods=['DELETE'])
 def delete_club(id):
     try:
-        current_app.mongo.db.clubs.delete_one({"student_id " : int(id)})   
-        if current_app.mongo.db.clubs.deleted_count == 0:
-            return error_response("Club not found", 404)
+        current_app.mongo.db.clubs.delete_one({"club_id" : str(id)})   
         # Remove the club from the students collection
         return jsonify({"message": "Club deleted successfully"}), 200
     except Exception as e:
