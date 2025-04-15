@@ -14,3 +14,10 @@ def get_next_sequence(name):
         return_document=True
     )
     return counter["sequence_value"]
+def is_unique_student_id(student_id):
+        existing_student = current_app.mongo.db.students.find_one({"student_id": student_id})
+        return existing_student is None
+
+def is_unique_club_id(club_id):
+        existing_club = current_app.mongo.db.clubs.find_one({"club_id": club_id})
+        return existing_club is None
