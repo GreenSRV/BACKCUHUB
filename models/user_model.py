@@ -14,4 +14,4 @@ class ClubSchema(Schema):
     date = fields.Str(required=True)
     faculty = fields.Str(required=True)
     image = fields.Str(required=True)
-    members = fields.Int(required=True)
+    members = fields.Str(required=True)
