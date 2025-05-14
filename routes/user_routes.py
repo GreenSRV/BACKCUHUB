@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from bson.objectid import ObjectId
 from bson.json_util import dumps
 from models.user_model import StudentSchema, ClubSchema
-from utils.response import get_next_sequence, is_unique_club_id, is_unique_student_id, success_response, error_response
+from utils.response import get_next_sequence, is_unique_club_id, is_unique_student_id, success_response, error_response, is_unique_club_name
 
 
 user_bp = Blueprint('user_routes', __name__)
@@ -33,7 +33,7 @@ def add_student():
         return error_response(e, 500)
     
 @user_bp.route('/students', methods=['GET'])
-def get_students():
+def get_students(): 
     try:
         # Check if query parameter is provided
         search_query = request.args.get('query','')    
@@ -76,8 +76,8 @@ def add_club():
         # data["club_id"] = get_next_sequence("club_id")  # Auto-increment club_id
         validated = club_schema.load(data)
         # Check if club_id is unique
-        if (is_unique_club_id(validated["club_id"]) == False):
-            return error_response("Club ID already exists", 400)
+        if (is_unique_club_name(validated["name"]) == False):
+            return error_response("Club Name already exists", 400)
 
         current_app.mongo.db.clubs.insert_one(validated)
 
@@ -91,32 +91,32 @@ def get_clubs():
         # Check if query parameter is provided
         search_query = request.args.get('query', '')
         data = current_app.mongo.db.clubs.find({
-            "club_id": {"$regex": search_query, "$options": "i"}
+            "name": {"$regex": search_query, "$options": "i"}
         })
         return dumps(data), 200
     except Exception as e:
         return error_response(e, 500)
 
-@user_bp.route('/clubs/<id>', methods=['PUT'])
-def update_club(id):
+@user_bp.route('/clubs/<name>', methods=['PUT'])
+def update_club(name):
     try:
         data = request.json
         validated = club_schema.load(data, partial=True)
         # Check if club_id is unique 
         # if "club_id" in validated and not is_unique_club_id(validated["club_id"]):
         #     return error_response("Club ID already exists", 400)
-        if "club_id" in validated:
-            del validated["club_id"]  # Prevent updating the club_id
-            return error_response("Club ID cannot be updated", 400)
-        current_app.mongo.db.clubs.update_one({"club_id": str(id)}, {"$set": validated})
+        if "name" in validated:
+            del validated["name"]  # Prevent updating the club_id
+            return error_response("Club Name cannot be updated", 400)
+        current_app.mongo.db.clubs.update_one({"name": str(name)}, {"$set": validated})
         return success_response("Club updated successfully")
     except Exception as e:
         return error_response(e, 500)
   
-@user_bp.route('/clubs/<id>', methods=['DELETE'])
-def delete_club(id):
+@user_bp.route('/clubs/<name>', methods=['DELETE'])
+def delete_club(name):
     try:
-        current_app.mongo.db.clubs.delete_one({"club_id": str(id)})   
+        current_app.mongo.db.clubs.delete_one({"name": str(name)})   
         
         # Remove the club from the students collection
         return jsonify({"message": "Club deleted successfully"}), 200

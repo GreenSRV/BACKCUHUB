@@ -21,3 +21,7 @@ def is_unique_student_id(student_id):
 def is_unique_club_id(club_id):
         existing_club = current_app.mongo.db.clubs.find_one({"club_id": club_id})
         return existing_club is None
+
+def is_unique_club_name(name):
+        existing_club = current_app.mongo.db.clubs.find_one({"name": name})
+        return existing_club is None
