@@ -17,6 +17,27 @@ def index():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@user_bp.route('/students/login' , methods=['GET'])
+def login_student():
+    #pass student_id and password from body
+    try:
+        data = request.json
+        student_id = data.get("student_id")
+        password = data.get("password")
+        if not student_id or not password:
+            return error_response("Student ID and Password are required", 400)
+        
+        student = current_app.mongo.db.students.find_one({"student_id": student_id, "password": password})
+        if student:
+            return success_response("Login successful", 200)
+        else:
+            return error_response("Invalid Student ID or Password", 401)
+    except Exception as e:
+        return error_response(e, 500)
+    
+    
+    
 # CRUD for StudentSchema
 @user_bp.route('/students', methods=['POST'])
 def add_student():
