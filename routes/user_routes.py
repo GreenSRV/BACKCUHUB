@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from bson.objectid import ObjectId
 from bson.json_util import dumps
 from models.user_model import StudentSchema, ClubSchema
-from utils.response import get_next_sequence, is_unique_club_id, is_unique_student_id, success_response, error_response, is_unique_club_name
+from utils.response import  is_unique_student_id, success_response, error_response, is_unique_club_name
 
 
 user_bp = Blueprint('user_routes', __name__)
@@ -25,12 +25,18 @@ def login_student():
         data = request.json
         student_id = data.get("student_id")
         password = data.get("password")
+        club = data.get("club")
+        sending = {
+            "student_id": student_id,
+            "password": password,
+            "club": club
+        }
         if not student_id or not password:
             return error_response("Student ID and Password are required", 400)
         
         student = current_app.mongo.db.students.find_one({"student_id": student_id, "password": password})
         if student:
-            return success_response("Login successful", 200)
+            return success_response(("Login successful",sending ), 200)
         else:
             return error_response("Invalid Student ID or Password", 401)
     except Exception as e:
@@ -89,9 +95,28 @@ def delete_student(id):
     except Exception as e:
         return error_response(e, 500)
 
+
+
+@user_bp.route('/clubs/rating/<id>', methods=['POST'])
+def add_student_rating(id):
+    try:
+        data = request.json
+        rating = data.get("rating")
+        if not rating or not (1 <= rating <= 5):
+            return error_response("Rating must be between 1 and 5", 400)
+        
+        # Check if student_id exists
+        student = current_app.mongo.db.students.find_one({"student_id": str(id)})
+        if not student:
+            return error_response("Student ID not found", 404)
+        current_app.mongo.db.clubs.update_one( {"$push": {"ratings": rating}})
+        return success_response("Rating added successfully", 201)
+    except Exception as e:
+        return error_response(e, 500)
+
 # CRUD for ClubSchema
 @user_bp.route('/clubs', methods=['POST'])
-def add_club():
+def add_club(): 
     try:
         data = request.json
         # data["club_id"] = get_next_sequence("club_id")  # Auto-increment club_id
