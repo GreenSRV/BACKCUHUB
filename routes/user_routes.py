@@ -71,6 +71,21 @@ def get_students():
     except Exception as e:
         return error_response(e, 500)
 
+# @user_bp.route('/students/<id>/clubs', methods=['GET'])
+# def get_student_clubs(id):
+#     try:
+#         student = current_app.mongo.db.students.find_one({"student_id": str(id)})
+#         if not student:
+#             return error_response("Student ID not found", 404)
+        
+#         club_names = student.get("club", [])  # list of joined club names
+        
+#         # Now fetch club details from the club collection
+#         clubs = list(current_app.mongo.db.clubs.find({"name": {"$in": club_names}}))
+#         return dumps(clubs), 200
+#     except Exception as e:
+#         return error_response(e, 500)
+
 @user_bp.route('/students/<id>', methods=['PUT'])
 def update_student(id):
     try:
@@ -187,6 +202,50 @@ def delete_club(name):
         return jsonify({"message": "Club deleted successfully"}), 200
     except Exception as e:
         return error_response(e, 500)
+    
+#Added Route  
+@user_bp.route('/clubs/<string:club_name>/rate', methods=['PUT'])
+def rate_club(club_name):
+    try:
+        data = request.get_json()
+        rating = data.get("rating")
+        club = current_app.mongo.db.clubs.find_one({"name": club_name})
+        
+        if not club:
+            return jsonify({"error": "Club not found"}), 404
+
+        # Append the new rating to the existing list
+        updated_ratings = club.get("ratings", [])
+        updated_ratings.append(rating)
+        current_app.mongo.db.clubs.update_one(
+            {"name": club_name},
+            {"$set": {"ratings": updated_ratings}}
+        )
+
+        return jsonify({"message": "Rating added"}), 200
+    except Exception as e:
+        return error_response(e, 500)
+    
+@user_bp.route('/students/<string:id>/clubs', methods=['GET'])
+def get_student_clubs(id):
+    try:
+        student = current_app.mongo.db.students.find_one({"student_id": str(id)})
+        if not student:
+            return error_response("Student ID not found", 404)
+
+        club_names = student.get("club", [])
+        clubs = list(current_app.mongo.db.clubs.find({"name": {"$in": club_names}}))
+
+        # Calculate average rating
+        for club in clubs:
+            ratings = club.get("ratings", [])
+            club["rating"] = round(sum(ratings) / len(ratings), 1) if ratings else 0  # Default to 3
+
+        return dumps(clubs), 200
+    except Exception as e:
+        return error_response(e, 500)
+
+
     
 
 

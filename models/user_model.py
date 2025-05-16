@@ -15,6 +15,6 @@ class ClubSchema(Schema):
     faculty = fields.Str(required=True)
     image = fields.Str(required=True)
     members = fields.Str(required=True)
-    ratings = fields.List(fields.Int(validate=lambda x: 1 <= x <= 5), load_default=[], dump_default=[])
+    ratings = fields.List(fields.Int(), load_default=[])
     average_rating = fields.Float(dump_only=True)
     
