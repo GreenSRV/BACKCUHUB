@@ -93,10 +93,15 @@ def add_club_to_student(id):
         club_name = request.json.get("club")
         if not club_name:
             return error_response("Club name required", 400)
-        current_app.mongo.db.students.update_one(
+        result = current_app.mongo.db.students.update_one(
             {"student_id": str(id)},
-            {"$push": {"club": club_name}}
+            {"$addToSet": {"club": club_name}}
         )
+        if result.matched_count == 0:
+            return error_response("Student ID not found", 404)
+        if result.modified_count == 0:
+            return error_response("Club already added or no change made", 400)
+
         return success_response("Club added successfully")
     except Exception as e:
         return error_response(e, 500)
