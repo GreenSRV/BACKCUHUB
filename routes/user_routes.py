@@ -18,7 +18,7 @@ def index():
         return jsonify({"error": str(e)}), 500
 
 
-@user_bp.route('/students/login' , methods=['GET'])
+@user_bp.route('/students/login' , methods=['POST'])
 def login_student():
     #pass student_id and password from body
     try:
@@ -84,6 +84,20 @@ def update_student(id):
             return error_response("Student ID cannot be updated", 400)
         current_app.mongo.db.students.update_one({"student_id": str(id)}, {"$set": validated})
         return success_response("Student updated successfully") 
+    except Exception as e:
+        return error_response(e, 500)
+
+@user_bp.route('/students/<id>/addclub', methods=['PUT'])
+def add_club_to_student(id):
+    try:
+        club_name = request.json.get("club")
+        if not club_name:
+            return error_response("Club name required", 400)
+        current_app.mongo.db.students.update_one(
+            {"student_id": str(id)},
+            {"$push": {"club": club_name}}
+        )
+        return success_response("Club added successfully")
     except Exception as e:
         return error_response(e, 500)
 
