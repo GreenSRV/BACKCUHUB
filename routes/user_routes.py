@@ -165,17 +165,6 @@ def add_club():
     except Exception as e:
         return error_response(e, 500)
 
-@user_bp.route('/clubs', methods=['GET'])
-def get_clubs():
-    try:
-        # Check if query parameter is provided
-        search_query = request.args.get('query', '')
-        data = current_app.mongo.db.clubs.find({
-            "name": {"$regex": search_query, "$options": "i"}
-        })
-        return dumps(data), 200
-    except Exception as e:
-        return error_response(e, 500)
 
 @user_bp.route('/clubs/<name>', methods=['PUT'])
 def update_club(name):
@@ -225,7 +214,7 @@ def rate_club(club_name):
         return jsonify({"message": "Rating added"}), 200
     except Exception as e:
         return error_response(e, 500)
-    
+
 @user_bp.route('/students/<string:id>/clubs', methods=['GET'])
 def get_student_clubs(id):
     try:
@@ -240,6 +229,23 @@ def get_student_clubs(id):
         for club in clubs:
             ratings = club.get("ratings", [])
             club["rating"] = round(sum(ratings) / len(ratings), 1) if ratings else 0  # Default to 3
+
+        return dumps(clubs), 200
+    except Exception as e:
+        return error_response(e, 500)
+
+@user_bp.route('/clubs', methods=['GET'])
+def get_clubs():
+    try:
+        search_query = request.args.get('query', '')
+        clubs = list(current_app.mongo.db.clubs.find({
+            "name": {"$regex": search_query, "$options": "i"}
+        }))
+
+        # Add average rating to each club
+        for club in clubs:
+            ratings = club.get("ratings", [])
+            club["averageRating"] = round(sum(ratings) / len(ratings), 1) if ratings else 0
 
         return dumps(clubs), 200
     except Exception as e:
