@@ -102,6 +102,25 @@ def update_student(id):
     except Exception as e:
         return error_response(e, 500)
 
+@user_bp.route('/students/<id>/removeclub', methods=['PUT'])
+def remove_club_from_student(id):
+    try:
+        club_name = request.json.get("club")
+        if not club_name:
+            return error_response("Club name required", 400)
+        result = current_app.mongo.db.students.update_one(
+            {"student_id": str(id)},
+            {"$pull": {"club": club_name}}
+        )
+        if result.matched_count == 0:
+            return error_response("Student ID not found", 404)
+        if result.modified_count == 0:
+            return error_response("Club not found in student's list", 400)
+
+        return success_response("Club removed successfully")
+    except Exception as e:
+        return error_response(e, 500)
+    
 @user_bp.route('/students/<id>/addclub', methods=['PUT'])
 def add_club_to_student(id):
     try:
